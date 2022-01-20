@@ -1,0 +1,26 @@
+{   "hyper_parameter": {
+        "linear_dropout" : 0.3,
+        "bert_att_dropout" : 0.15,
+        "bert_hidd_dropout" : 0.2,
+        "bert_lr" : 1e-3,
+        "bert_weight_decay" : 1e-5,
+        "softmax_lr" : 5e-3,
+        "softmax_weight_decay" : 1e-3,
+        "epochs": 5,
+        "patience": 10,
+        "max_grad_norm": 1,
+        "num_layer": 197,
+        "dir_train": "dataset/train_update_10t01.pkl",
+        "dir_dev": "dataset/dev_update_10t01.pkl"
+    },
+
+    "sub" : "▁",
+    "device": "cpu",
+    "max_len": 256,
+    "batch_size": 32,   
+    "tag_values": ["PAD", "ADDRESS","SKILL","EMAIL","PERSON","PHONENUMBER","MISCELLANEOUS","QUANTITY","PERSONTYPE",
+        "ORGANIZATION","PRODUCT","IP","LOCATION","O","DATETIME","EVENT", "URL"],
+    "tokenizer" : "pretrain/xlmr_Tokenizer",
+    "config" : "pretrain/xlmr_Config",
+    "model"  : "pretrain/xlmr_Model"
+}
