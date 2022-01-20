@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DisplaCify App</title>
+	<meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style type="text/css">
+	.main-section{
+	margin:0 auto;
+	padding: 20px;
+	margin-top: 100px;
+	background-color: #fff;
+	box-shadow: 0px 0px 20px #c1c1c1;
+}
+#custom_card{
+	background-color:grey;
+	color:#fff;
+	padding:10px;
+}
+#custom_card2{
+	background-color:#383838;
+	color:#fff;
+	padding:10px;
+  	height: 750px;
+}
+
+.form-control {
+
+    height: 200px !important;
+
+}
+</style>
+  
+    <!-- Font Awesome -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
+<!-- Bootstrap core CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet">
+<!-- Material Design Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/css/mdb.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+  <a class="navbar-brand" href="/">NER</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+      
+		<a class="nav-link" href="/xai-lime" target="_blank">Interpret <span class="sr-only">(current)</span></a>
+	</li>
+	<li>
+		<a class="nav-link" href="/" target="_blank">Predict <span class="sr-only">(current)</span></a>
+      </li>
+       <!-- <li class="nav-item">
+        <a class="nav-link" href="/previewer">Previewer</a>
+      </li>
+       <li class="nav-item">
+        <a class="nav-link" href="#">About</a>
+      </li> -->
+
+
+    </ul>
+
+  </div>
+</nav>
+
+<div class="jumbotron" style="background:#673AB7;color:#fff; text-align: center; height: 100px;">
+      <h1>Named Entity Recognition</h1>
+      <!-- <p><a class="btn btn-success waves-effect btn-lg" href="/" role="button">Refresh &raquo;</a></p> -->
+  </div>
+
+
+	
+
+</div> 
+
+<div class="container" style="margin:15px !important; max-width: 98% !important;">
+	<div class="row">
+		<div class="col-md-6" >
+          <div class="card mb-10 shadow-sm" id="custom_card" style="border: 1px !important;">
+          
+              <textarea rows="30" required="true" name="rawtext" class="form-control">{{raw_text}}</textarea>
+              
+				<a>ID: <input type="input" id ="index_word" ></a>
+		
+              <button  onclick="Interpret()"> Interpret</button>
+     
+		</div>
+	</div>
+	<div class="col-md-6">
+          <div class="card mb-10 shadow-sm" id="custom_card2">
+          	<h4>Result of Data</h4>
+			
+		</div>
+	</div>
+</div>
+	
+
+</div>
+
+
+
+<!-- JQuery -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Bootstrap tooltips -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+<!-- Bootstrap core JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js"></script>
+<!-- MDB core JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/js/mdb.min.js"></script>
+
+<script type="text/javascript">
+
+function addRow(key,text, prob) {
+  const div = document.createElement('div');
+
+
+  div.className = 'entities';
+  
+
+  div.innerHTML =  '<div>' + key + ":" + prob+'</div>' +text;
+
+  document.getElementById('custom_card2').appendChild(div);
+}
+
+function round(value, decimals) {
+  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+
+function softmax(value, list_value){
+	var var_sum_exp = 0
+	for (v in list_value){
+		var_sum_exp += Math.exp(v)
+	}
+
+	console.log("softmax")
+	console.log(Math.exp(value)/var_sum_exp)
+	return Math.exp(value)/var_sum_exp
+}
+
+function generate_text(word, score, color){
+	
+	var word_generated = '<mark class="entity" style="background: '+color+'; padding: 0.45em 0.6em; margin: 0 0.25em; line-height: 1; border-radius: 0.35em;">' + word
+		+ '<span style="font-size: 0.8em; font-weight: bold; line-height: 1; border-radius: 0.35em; vertical-align: middle; margin-left: 0.5rem">'+round(score, 2) +'</span>'
+
+		+ '</mark>'
+
+
+	return word_generated
+
+}
+	function Interpret() {
+	
+		console.log("waiting");
+		get_labels().done(function(r){
+			console.log("recive infor");
+			if ("message" in r){
+				var messsage = r["message"];
+				alert(messsage)
+				return
+			}
+			
+			var sent = r["sent"];
+			for (key in r){
+				
+				
+				var text =""
+				if (key != "sent"){
+					
+					var proba = r[key]["proba"];
+					var scores = r[key]["scores"]
+					
+					var parts = sent.split(' ');
+
+
+					// get list value:
+					var positive_list = [];
+					var negative_list = [];
+					for (p in scores){
+						var score = scores[p]
+						
+						if (score>0){
+							positive_list.push(score)
+						}
+						
+						else if (score < 0){
+							negative_list.push(-score)
+						}
+					}
+					// console.log("negative_list")
+					// console.log(scores)
+					// console.log("negative_list")
+					for (let i = 0; i < parts.length; i++) {
+						var word = parts[i];
+						var score = scores[i];
+						var color  = "rgba(128, 128, 128,0)"
+						if (score > 0){
+							var score_softmax = softmax(score, positive_list);
+							color = "rgba(0,128,0,"+ score_softmax +")"
+						}
+
+						if (score < 0){
+							
+							var score_softmax = softmax(-score, negative_list);
+							color = "rgba(255,0,0,"+ score_softmax +")"
+						}
+
+						
+						text += generate_text(word,score,color);
+						
+					}
+
+					addRow(key,text, proba)
+				}
+			}
+	
+		}
+		);
+
+		console.log("done!!!!");	
+		
+	}
+
+	function get_labels() {
+		var text;
+		var index_word;
+		if ($("textarea").val()!== "") {
+			text = $("textarea").val();	
+		}
+		else{
+			alert("please input text in textarea")
+		}
+
+		index_word = document.getElementById('index_word').value;
+	
+		return $.ajax({
+			url: 'http://52.221.181.38:5000/xai',
+			data: 
+				JSON.stringify({
+					text: text,
+					idx: index_word
+				}),
+			
+			type: 'POST',
+			contentType: "application/json; charset=utf-8",
+		});
+	}	
+
+	function xai(){
+		console.log("testing")
+		getDevices = async () => {
+			
+			const settings = {
+				method: 'POST',
+				data: 
+				JSON.stringify({
+					text: "Pham Manh dang test loi",
+					idx: 1
+				}),
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json',
+				}
+			};
+			try {
+				const fetchResponse = await fetch("http://52.221.181.38:5000/xai", settings);
+				const data = await fetchResponse.json();
+				return data;
+			} catch (e) {
+				return e;
+			}    
+
+		}
+		console.log("getDevices")
+		console.log(getDevices)
+		console.log("done!!")
+		
+	}
+</script>
+</body>
+</html>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DisplaCify App</title>
+	<meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<style type="text/css">
+		.main-section{
+		margin:0 auto;
+		padding: 20px;
+		margin-top: 100px;
+		background-color: #fff;
+		box-shadow: 0px 0px 20px #c1c1c1;
+	}
+	#custom_card{
+		background-color:#FAD6A5;
+		color:#fff;
+		margin-top: 70px;
+		padding:10px;
+		height: 640px;
+	}
+	#custom_card2{
+		border-width: 10px;
+		border-color: #FAD6A5;
+		border-style: solid;
+		background-color:white;
+		color:black;
+		margin-top: 70px;
+		padding:10px;
+		height: 640px;
+		
+	}
+
+
+</style>
+  
+    <!-- Font Awesome -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
+<!-- Bootstrap core CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet">
+<!-- Material Design Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/css/mdb.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <!-- <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark"> -->
+	<nav class="navbar navbar-expand-md fixed-top" style="background:#B0E0E6;">
+	<a class="navbar-brand" href="/"><img src = 'static/nerlogo-removebg-preview.png' style="width: 100px; height: 50px;"></a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+
+  <!-- <a class="navbar-brand" href="/" style="color:#FF2400;"><b>NER</b></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button> -->
+
+  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+		<a class="nav-link" href="/xai-lime">Interpret <span class="sr-only">(current)</span></a>
+	</li>
+	<li>
+		<a class="nav-link" href="/">Predict <span class="sr-only">(current)</span></a>
+      </li>
+       <!-- <li class="nav-item">
+        <a class="nav-link" href="/previewer">Previewer</a>
+      </li>
+       <li class="nav-item">
+        <a class="nav-link" href="#">About</a>
+      </li> -->
+
+
+    </ul>
+
+  </div>
+</nav>
+
+<!-- <div class="jumbotron" style="background:#F2BDCD;color:#fff; text-align: center; height: 100px;">
+      <h1>Named Entity Recognition</h1>
+      <p><a class="btn btn-success waves-effect btn-lg" href="/" role="button">Refresh &raquo;</a></p>
+	</div> -->
+
+<!-- {% filter markdown %}
+#### Named Entity Recog
+=============
+{% endfilter %} -->
+
+
+<!-- <div class="container" style="margin:15px !important; max-width: 98% !important;">
+	<div class="row">
+		<div class="col-md-6" >
+          <div class="card mb-10 shadow-sm" id="custom_card" style="border: 1px !important;">
+          	<h4>Original Data</h4>
+          	<p style='line-height: 2.5rem !important' >{{ rawtext }}</p>
+			
+		</div>
+	</div>
+	<div class="col-md-6">
+          <div class="card mb-10 shadow-sm" id="custom_card2">
+          	<h4>Result of Data</h4>
+			<p style='line-height: 2.5rem !important;'>{{ result|markdown}}</p>
+			
+		</div>
+	</div>
+</div>
+	
+
+</div> -->
+
+<div class="container" style="margin:15px !important; max-width: 98% !important;">
+	<div class="row">
+		<div class="col-md-6" >
+          <div class="card mb-10 shadow-sm" id="custom_card" style="border: 1px !important;">
+          	<form method="POST" action="{{ url_for('extract')}}">
+			<input type="submit" name = "clear_button" value = "Clear">
+			<input type="submit" name  = "submit_button"  value = "NE Recognition">
+            <textarea rows="24" required="true" name="rawtext" class="form-control">{{raw_text}}</textarea>
+            </form>
+		</div>
+	</div>
+	<div class="col-md-6">
+          <div class="card mb-10 shadow-sm" id="custom_card2">
+          	<h4>Result of Data</h4>
+			<p style='line-height: 2.5rem !important;'>{{ result|markdown }}</p>
+			
+		</div>
+	</div>
+
+</div>
+	
+
+</div>
+
+
+
+<!-- JQuery -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Bootstrap tooltips -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+<!-- Bootstrap core JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js"></script>
+<!-- MDB core JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/js/mdb.min.js"></script>
+
+<script type="text/javascript">
+	$('.file_upload').file_upload();
+</script>
+</body>
+</html>
+
+</body>
+</html>
+
