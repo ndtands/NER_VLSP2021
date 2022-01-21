@@ -21,17 +21,12 @@ $ git clone https://github.com/ndtands/NER_VLSP2021.git
 
 **Step 2**: create virtual environment (ex: .env):
 ```
-$ python3 -m venv .env
+$ python3 -m venv .env or conda create --name .env
 
-```
-#### Mac OS / Linux
-```
+Mac OS / Linux
 $ .env/bin/activate
-```
-#### Windows
-
-```
-.env\Scripts\activate
+Windows
+$.env\Scripts\activate
 ```
 
 **Step 3:** Install requirements.txt into environment have created before:
