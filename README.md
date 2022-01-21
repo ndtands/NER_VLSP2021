@@ -52,7 +52,7 @@ https://drive.google.com/file/d/1sPCnqT1m_tvj-V_9e6qucXck4ydiiWWJ/view?usp=shari
 ## Conclude
 We provide open source for anyone can use and deverlop it. If you have any contribute please push it.
 If you have problem, you can comment in here or send problem to address:
-1. Lengocloi1805@gmail.com (Lê Ngọc Lợi)
+1. lengocloi1805@gmail.com (Lê Ngọc Lợi)
 2. ngtinh98@gmail.com (Nguyễn Thị Tình)
 3. ndtan.hcm@gmail.com (Nguyễn Duy Tân)
 4. pvm26042000@gmail.com (Phạm Văn Mạnh)
