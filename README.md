@@ -41,12 +41,11 @@ $ pip install -r requirements.txt
 ```
 
 Step 4: After have intalled package, can run app.y:
-
 ```
 $ python app.py
 ```
 
-Step 5: Assess for addess 127.0.0 for using it.
+Step 5: Assess addess '127.0.0:5000' for using application.
 
 ## Conclude
 We provide open source for anyone can use and deverlop it. If you have any contribute please push it.
