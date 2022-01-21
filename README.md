@@ -15,34 +15,36 @@ We have used LIME method for interpreting our model. We have packed in xai.py
 We use FaskAPI for get output from model predicted. Can use API for Integrating into Docano or any applications be supported to anotation label for Ner Problem. You can use API in app.py
 ## Usage
 Step 1: clone source code From source code:
-'''
+```
 $ git clone https://github.com/ndtands/NER_VLSP2021.git
 
-'''
+```
 
 Step 2: create virtual environment (ex: .env):
-'''
+```
 $ python3 -m venv .env
 
-'''
+```
 #### Mac OS / Linux
-'''
-source .env/bin/activate
-'''
+```
+$ .env/bin/activate
+```
 #### Windows
-'''
+
+```
 .env\Scripts\activate
-'''
+```
 
 Step 3: Install requirements.txt into environment have created before:
-'''
-pip install -r requirements.txt
-'''
+```
+$ pip install -r requirements.txt
+```
 
 Step 4: After have intalled package, can run app.y:
-'''
+
+```
 $ python app.py
-'''
+```
 
 Step 5: Assess for addess 127.0.0 for using it.
 
