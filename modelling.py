@@ -61,7 +61,7 @@ class NER(nn.Module):
             predict = np.argmax(logits, axis=2)[0][:len_subword]
             sm = [(utils.softmax(logits[0,i])) for i in range(len_subword)]
             tags_predict = [self.tag_values[i]  for i in  predict]
-            tests, tags, probs = utils.merge_subtags_test(sub, tags_predict, sm)
+            tests, _, tags, probs = utils.merge_subtags(tag_values=self.tag_values, tokens=tokens, sm=sm)
             words_out += tests[1:-1]
             tags_out += tags[1:-1]
             probs_out += probs[1:-1]
@@ -201,7 +201,7 @@ class NER(nn.Module):
             tokens = self.tokenizer.convert_ids_to_tokens(b_input_id)[:n]
             labels = [self.tag_values[i] for i in labels][:n]
             preds = [self.tag_values[i] for i in preds]
-            token_new, label_new, pred_new, _ = utils.merge_subtags_train(tag_values=self.tag_values, tags_true=labels, tokens=tokens, sm=sm)
+            token_new, label_new, pred_new, _ = utils.merge_subtags(tag_values=self.tag_values, tags_true=labels, tokens=tokens, sm=sm)
             out.append(list(zip(token_new, label_new, pred_new)))   
         return out
 
