@@ -96,25 +96,6 @@ def cutting_subword(X, sub = '▁', size=254):
         res_X[i].insert(0, TOKEN_START)
         res_X[i].append(TOKEN_END)
     return res_X
-
-##########################################################
-def merge_subtags(tokens, tags_predict):
-    tags = []
-    tests = []
-    for index in range(len(tokens)):
-        if len(tests) == 0:
-            if "▁" in tokens[index]:
-                tests.append(tokens[index][1:])
-            else:
-                tests.append(tokens[index])
-            tags.append(tags_predict[index])
-        elif "▁" in tokens[index]:
-            tests.append(tokens[index][1:])
-            tags.append(tags_predict[index])
-        else:
-            tests[-1] = tests[-1] + tokens[index]
-    return tests, tags
-
 ############################################################
 def visualize_spacy(arr):
     if len(arr) < 1:
@@ -134,9 +115,6 @@ def visualize_spacy(arr):
     ex = [{'text': text, 'ents': [{'start': x[0], 'end': x[1], 'label': x[2]} for x in start_end_labels if x[2]!= 0]}]
     return displacy.render(ex, manual=True, jupyter=True, style='ent', options = OPTIONS)#page=True
 #########################################
-def softmax(arr):
-    return np.exp(arr) / sum(np.exp(arr))
-
 def write_pickle(dt, path):
   with open(path, 'wb') as f:
     pickle.dump(dt, f)
