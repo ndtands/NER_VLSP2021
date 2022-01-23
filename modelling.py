@@ -58,9 +58,7 @@ class NER(nn.Module):
                 outputs = self.model.forward_custom(input_ids_tensor, input_mask_tensor)
             logits = outputs[0].detach().cpu().numpy()
             len_subword = sum(input_ids[0] != self.tokenizer.pad_token_id)
-            predict = np.argmax(logits, axis=2)[0][:len_subword]
             sm = [(utils.softmax(logits[0,i])) for i in range(len_subword)]
-            tags_predict = [self.tag_values[i]  for i in  predict]
             tests, _, tags, probs = utils.merge_subtags(tag_values=self.tag_values, tokens=sub, sm=sm)
             words_out += tests[1:-1]
             tags_out += tags[1:-1]
