@@ -42,7 +42,7 @@ $ pip install -r requirements.txt
 ```
 
 **Step 5:** Training Model:
-For training model can follow our notebook: main.ipynb or you can dowload our trained weight file for data VLSP 2021.
+For training model can follow our notebook: TEST.ipynb or you can dowload our trained weight file for data VLSP 2021.
 '''
 https://drive.google.com/file/d/1sPCnqT1m_tvj-V_9e6qucXck4ydiiWWJ/view?usp=sharing
 '''
