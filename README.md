@@ -19,7 +19,7 @@ We use FaskAPI for get output from model predicted. Can use API for Integrating 
 $ git clone https://github.com/ndtands/NER_VLSP2021.git
 ```
 
-**Step 2**: Dowload pretrain folder from huggingface or can use "xml-roberta-base" to dowload direct path from.
+**Step 2**: Download pretrain folder from huggingface or can use "xml-roberta-base" to dowload direct path from.
 
 **Step 3**: Setup virtual environment (ex: .env):
 ```
@@ -42,16 +42,16 @@ $ pip install -r requirements.txt
 ```
 
 **Step 5:** Training Model:
-For training model can follow our notebook: main.ipynb or you can dowload our file weights trainded in data VLSP 2021.
+For training model can follow our notebook: main.ipynb or you can dowload our trained weight file for data VLSP 2021.
 '''
 https://drive.google.com/file/d/1sPCnqT1m_tvj-V_9e6qucXck4ydiiWWJ/view?usp=sharing
 '''
 
-**Step 6**: Affer complate process training, you can runing command 'python app.py' and assess addess '127.0.0:5000' for using application.
+**Step 6**: Affer complete process training, you can runing command 'python app.py' and access addess '127.0.0:5000' for using application.
 
-## Conclude
-We provide open source for anyone can use and deverlop it. If you have any contribute please push it.
-If you have problem, you can comment in here or send problem to address:
+## Contribution & Contact
+We provide open source for anyone can use and develop it. If you have any contributions, please push it.
+If you have any problems, you can comment here or send problems to address:
 1. lengocloi1805@gmail.com (Lê Ngọc Lợi)
 2. ngtinh98@gmail.com (Nguyễn Thị Tình)
 3. ndtan.hcm@gmail.com (Nguyễn Duy Tân)
