@@ -179,29 +179,34 @@ def is_IP(token):
         return True 
   return False
 
+  
+def isQuantityAfterIP(dt):
+  for i in dt:
+    if not i.isdigit() and i != '-':
+      return False
+  return True
+
 def processing_clear_label(datas):
   datas_trained = []
   for i in range(len(datas)):
     data = datas[i]
 
     if data[1] == 'EMAIL':
-      if is_Email(data[0]) == False:
+      if not is_Email(data[0]):
         data = (data[0], 'O')
 
-    if data[1] == "URL":
-      if is_URL(data[0]) == False:
+    elif data[1] == "URL":
+      if not is_URL(data[0]):
         data = (data[0], 'O')
 
-    if data[1] == 'IP':
-    
-      if is_IP(data[0]) == False:
-        if data[0].isalnum():
+    elif data[1] == 'IP':
+      if not is_IP(data[0]):
+        if isQuantityAfterIP(data[0]):
           data = (data[0], 'QUANTITY')
         else:
           data = (data[0], 'O')
 
-    if data[1] != "URL" and data[1] != "EMAIL" and data[1] != "IP":
-  
+    if data[1] == 'O':
       if is_Email(data[0]):
         data = (data[0], 'EMAIL')
 
@@ -213,7 +218,6 @@ def processing_clear_label(datas):
 
     datas_trained.append(data)
   return datas_trained
-
 
 
 def decide_label(part):
