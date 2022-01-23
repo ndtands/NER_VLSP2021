@@ -115,31 +115,6 @@ def merge_subtags(tokens, tags_predict):
             tests[-1] = tests[-1] + tokens[index]
     return tests, tags
 
-def merge_subtags_test(tokens, tags_predict, sm):
-    tags = []
-    tests = []
-    sms = []
-    temp = []
-    for index in range(len(tokens)):
-        if len(tests) == 0:
-            if "▁" in tokens[index]:
-                tests.append(tokens[index][1:])
-            else:
-                tests.append(tokens[index])
-            tags.append(tags_predict[index])
-            sms.append(sm[index])
-        elif "▁" in tokens[index] or "</s>" in tokens[index]:
-            tests.append(tokens[index][1:])
-            tags.append(tags_predict[index])
-            temp.append(sm[index])
-            sms.append(np.mean(temp, axis=0))
-            temp = []
-        else:
-            tests[-1] = tests[-1] + tokens[index]
-            temp.append(sm[index])
-    return tests, tags, sms
-
-
 ############################################################
 def visualize_spacy(arr):
     if len(arr) < 1:
@@ -296,7 +271,7 @@ def span_f1(arr, strict = FLAG_STRICT['MAX'], labels= None, digits=4):
         f1_avg += f1
     return f1_avg / len(labels), classfication_rp
 
-def merge_subtags_train(tag_values, tags_true, tokens, sm):
+def merge_subtags(tag_values, tokens, sm, tags_true=None):
     tags = []
     tests = []
     sms = []
@@ -309,14 +284,16 @@ def merge_subtags_train(tag_values, tags_true, tokens, sm):
             else:
                 tests.append(tokens[index])
             temp.append(sm[index])
-            trues.append(tags_true[index])
+            if tags_true:
+                trues.append(tags_true[index])
         
         elif "▁" in tokens[index] or "</s>" in tokens[index]:
             tests.append(tokens[index][1:])
             sms.append(np.mean(temp, axis=0))
             tags.append(tag_values[np.argmax(sms[-1])])
             temp = [sm[index]]
-            trues.append(tags_true[index])
+            if tags_true:
+                trues.append(tags_true[index])
         else:
             tests[-1] = tests[-1] + tokens[index]
             temp.append(sm[index])
@@ -326,5 +303,3 @@ def merge_subtags_train(tag_values, tags_true, tokens, sm):
 
 def softmax(arr):
     return np.exp(arr) / sum(np.exp(arr))
-
-
