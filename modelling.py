@@ -19,7 +19,8 @@ from tqdm.notebook import tqdm
 from tqdm import trange
 import numpy as np
 from define_name import *
-from processing import pre_processing
+from processing import pre_process
+from processing import post_process
 
 class NER(nn.Module):
     def __init__(self, config):
@@ -38,7 +39,7 @@ class NER(nn.Module):
         self.dataloader = BertDataLoader(self.tokenizer, self.tag_values, self.sub, self.max_len, self.batch_size, self.device)
 
     def predict(self, texts, interpret = False):
-        preprocessing_texts = pre_processing.preprocessing_text(texts)
+        preprocessing_texts = pre_process.preprocessing_text(texts)
         texts = preprocessing_texts["sent_out"]
         stack = preprocessing_texts["stack"]
         subwords = self.tokenizer.tokenize(texts)
@@ -64,9 +65,9 @@ class NER(nn.Module):
             tags_out += tags[1:-1]
             probs_out += probs[1:-1]
         out1 = [(w,t,p) for w,t,p in zip(words_out,tags_out, probs_out)]
-        out = pre_processing.span_cluster(out1)
+        out = post_process.span_cluster(out1)
         texts = " ".join([word for (word, _) in out])
-        result = pre_processing.post_processing(texts, stack, out)
+        result = post_process.post_processing(texts, stack, out)
         
         if interpret:
             return result, probs_out
