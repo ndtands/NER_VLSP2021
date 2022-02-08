@@ -1,17 +1,13 @@
 from tqdm.notebook import tqdm
 import torch.nn as nn
 import torch
-from keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from transformers import AutoConfig, AutoModel, AutoTokenizer
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler
-import pickle
 from transformers import AdamW, get_linear_schedule_with_warmup
-
 import torch.nn.functional as F
 log_soft = F.log_softmax
 import utils
-import data_processing
 from dataloader import BertDataLoader
 
 import torch
@@ -19,7 +15,11 @@ from tqdm.notebook import tqdm
 from tqdm import trange
 import numpy as np
 from define_name import *
-from processing import pre_processing
+from processing import pre_process
+from processing import post_process
+
+
+import time
 
 class NER(nn.Module):
     def __init__(self, config):
@@ -38,15 +38,19 @@ class NER(nn.Module):
         self.dataloader = BertDataLoader(self.tokenizer, self.tag_values, self.sub, self.max_len, self.batch_size, self.device)
 
     def predict(self, texts, interpret = False):
-        preprocessing_texts = pre_processing.preprocessing_text(texts)
+        start_predict_time = time.time()
+        preprocessing_texts = pre_process.preprocessing_text(texts)
         texts = preprocessing_texts["sent_out"]
         stack = preprocessing_texts["stack"]
+        start_model_time = time.time()
+
         subwords = self.tokenizer.tokenize(texts)
         sub_cut = utils.cutting_subword(subwords, sub = self.sub, size = self.max_len-2)
         tags_out = []
         words_out = []
         probs_out = []
         self.model.eval()
+        
         for sub in sub_cut:
             input_ids = pad_sequences([self.tokenizer.convert_tokens_to_ids(sub)],
                                         maxlen=self.max_len, dtype="long", value=self.tokenizer.pad_token_id,
@@ -64,30 +68,44 @@ class NER(nn.Module):
             tags_out += tags[1:-1]
             probs_out += probs[1:-1]
         out1 = [(w,t,p) for w,t,p in zip(words_out,tags_out, probs_out)]
-        out = pre_processing.span_cluster(out1)
-        texts = " ".join([word for (word, _) in out])
-        result = pre_processing.post_processing(texts, stack, out)
+        out = post_process.span_cluster(out1)
+        end_model_time = time.time()
         
+        texts = " ".join([word for (word, _) in out])
+        rs_text = post_process.post_processing(texts, stack, out)
+        end_predict_time = time.time()
+        predict_time = end_predict_time - start_predict_time
+        model_time = end_model_time - start_model_time
+        result = {"result": rs_text, "predict_time": predict_time, "model_time":model_time, "subcut": len(sub_cut), "token": len(subwords), "len_word": len(texts)}
+
         if interpret:
             return result, probs_out
         else:
             return result
 
-    def evaluate(self, dataloader, strict = FLAG_STRICT['MAX']):
+    def evaluate(self, dataloader, strict = FLAG_STRICT['MAX'], epoch = 10):
         self.model.eval()
         eval_loss = 0
         out = []
+        
+        start_model_time = time.time()
+       
         for batch in tqdm(dataloader, desc='Testing Process:'):
+           
             batch = tuple(t.to(self.device) for t in batch)
             b_input_ids, b_input_mask, b_labels = batch
             with torch.no_grad():
                 outputs = self.model.forward_custom(b_input_ids, b_input_mask, b_labels)
             eval_loss += outputs[0].mean().item()
-            
             out += self.batch_processing(batch, outputs)
+            
+            # if batch >= epoch:
+            #     break
+
+        end_model_time = time.time()
         eval_loss = eval_loss / len(dataloader)
         f1, result = utils.span_f1(arr = out, strict = strict, digits=4)
-        return eval_loss, f1, result, out
+        return {"eval_loss":eval_loss , "f1": f1, "result": result, "out": out, "batch_size": end_model_time - start_model_time}
 
     def train_model(self, train_loader, dev_loader, PATH, strict):
         optimizer = self.get_optimizer()
@@ -183,15 +201,19 @@ class NER(nn.Module):
         return optimizer
 
     def batch_processing(self, batch, outputs):
-        b_input_ids, b_input_mask, b_labels = batch
+        out = []
+        count_idx = 0
+
+        b_input_ids, _, b_labels = batch
+
         label_ids = b_labels.to('cpu').numpy().tolist()
         b_input_ids = b_input_ids.to('cpu').numpy().tolist()
         predict_labels = []
         logits = outputs[1].detach().cpu().numpy()
-        out = []
+        
         for predicts in np.argmax(logits, axis=2):
             predict_labels.append(predicts)
-        count_idx = 0
+        
         for b_input_id, preds, labels in zip(b_input_ids, predict_labels, label_ids):
             n = sum(np.array(b_input_id) != self.tokenizer.pad_token_id)
             sm = [(utils.softmax(logits[count_idx,ii])) for ii in range(n)]
@@ -201,6 +223,7 @@ class NER(nn.Module):
             preds = [self.tag_values[i] for i in preds]
             token_new, label_new, pred_new, _ = utils.merge_subtags(tag_values=self.tag_values, tags_true=labels, tokens=tokens, sm=sm)
             out.append(list(zip(token_new, label_new, pred_new)))   
+        
         return out
 
     def load_model(self, path):
