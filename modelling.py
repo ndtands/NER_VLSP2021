@@ -9,7 +9,7 @@ import torch.nn.functional as F
 log_soft = F.log_softmax
 import utils
 from dataloader import BertDataLoader
-
+from dataloader_real import BertDataLoaderReal
 import torch
 from tqdm.notebook import tqdm
 from tqdm import trange
@@ -35,13 +35,16 @@ class NER(nn.Module):
         self.sub = config['sub']
         self.model = BaseBertSoftmax(self.base_model, self.hyper_parameter['linear_dropout'], num_labels=len(self.tag_values))
         self.model.to(self.device)
+      
         self.dataloader = BertDataLoader(self.tokenizer, self.tag_values, self.sub, self.max_len, self.batch_size, self.device)
+        self.dataloaderreal = BertDataLoaderReal(self.tokenizer, self.tag_values, self.sub, self.max_len, self.batch_size, self.device)
 
     def predict(self, texts, interpret = False):
         start_predict_time = time.time()
         preprocessing_texts = pre_process.preprocessing_text(texts)
         texts = preprocessing_texts["sent_out"]
         stack = preprocessing_texts["stack"]
+        
         start_model_time = time.time()
 
         subwords = self.tokenizer.tokenize(texts)
@@ -63,21 +66,28 @@ class NER(nn.Module):
             logits = outputs[0].detach().cpu().numpy()
             len_subword = sum(input_ids[0] != self.tokenizer.pad_token_id)
             sm = [(utils.softmax(logits[0,i])) for i in range(len_subword)]
+            t1 = time.time()
             tests, _, tags, probs = utils.merge_subtags(tag_values=self.tag_values, tokens=sub, sm=sm)
+          
             words_out += tests[1:-1]
             tags_out += tags[1:-1]
             probs_out += probs[1:-1]
+            
         out1 = [(w,t,p) for w,t,p in zip(words_out,tags_out, probs_out)]
-        out = post_process.span_cluster(out1)
         end_model_time = time.time()
-        
+
+        ### Post processing
+        out = post_process.span_cluster(out1)
         texts = " ".join([word for (word, _) in out])
         rs_text = post_process.post_processing(texts, stack, out)
+
+        #end time all
         end_predict_time = time.time()
+        
         predict_time = end_predict_time - start_predict_time
         model_time = end_model_time - start_model_time
-        result = {"result": rs_text, "predict_time": predict_time, "model_time":model_time, "subcut": len(sub_cut), "token": len(subwords), "len_word": len(texts)}
 
+        result = {"result": rs_text, "predict_time": predict_time, "model_time":model_time, "subcut": len(sub_cut), "token": len(subwords), "len_word": len(texts)}
         if interpret:
             return result, probs_out
         else:
@@ -87,10 +97,11 @@ class NER(nn.Module):
         self.model.eval()
         eval_loss = 0
         out = []
+        count = 0
         
         start_model_time = time.time()
        
-        for batch in tqdm(dataloader, desc='Testing Process:'):
+        for batch in dataloader:
            
             batch = tuple(t.to(self.device) for t in batch)
             b_input_ids, b_input_mask, b_labels = batch
@@ -99,14 +110,49 @@ class NER(nn.Module):
             eval_loss += outputs[0].mean().item()
             out += self.batch_processing(batch, outputs)
             
-            # if batch >= epoch:
-            #     break
+            if count == epoch:
+                end_model_time = time.time()
+                break
+            count += 1
 
-        end_model_time = time.time()
         eval_loss = eval_loss / len(dataloader)
         f1, result = utils.span_f1(arr = out, strict = strict, digits=4)
-        return {"eval_loss":eval_loss , "f1": f1, "result": result, "out": out, "batch_size": end_model_time - start_model_time}
+        return {"eval_loss":eval_loss , "f1": f1, "result": result, "out": out, "batch_time": end_model_time - start_model_time}
 
+    def evaluate_real(self, texts):
+
+        start_predict_time = time.time()
+        preprocessing_texts = pre_process.preprocessing_text(texts)
+        texts = preprocessing_texts["sent_out"]
+        stack = preprocessing_texts["stack"]
+        
+        start_model_time = time.time()
+
+        subwords = self.tokenizer.tokenize(texts)
+        sub_cut = utils.cutting_subword(subwords, sub = self.sub, size = self.max_len-2)
+        tags_out = []
+        words_out = []
+        probs_out = []
+
+        self.model.eval()
+        eval_loss = 0
+        out = []
+       
+        dataloader = self.dataloaderreal.create_dataloader(sub_cut)
+        for batch in dataloader:
+           
+            batch = tuple(t.to(self.device) for t in batch)
+            b_input_ids, b_input_mask = batch
+            with torch.no_grad():
+                outputs = self.model.forward_custom(b_input_ids, b_input_mask)
+
+            out += self.batch_processing_real(batch, outputs)
+            
+        print(len(dataloader), len(sub_cut))
+        
+        return {"eval_loss":eval_loss ,  "out": out}
+
+    
     def train_model(self, train_loader, dev_loader, PATH, strict):
         optimizer = self.get_optimizer()
         total_steps = len(train_loader) * self.hyper_parameter['epochs']
@@ -202,13 +248,15 @@ class NER(nn.Module):
 
     def batch_processing(self, batch, outputs):
         out = []
+        predict_labels = []
+
         count_idx = 0
 
         b_input_ids, _, b_labels = batch
 
         label_ids = b_labels.to('cpu').numpy().tolist()
         b_input_ids = b_input_ids.to('cpu').numpy().tolist()
-        predict_labels = []
+        
         logits = outputs[1].detach().cpu().numpy()
         
         for predicts in np.argmax(logits, axis=2):
@@ -223,6 +271,32 @@ class NER(nn.Module):
             preds = [self.tag_values[i] for i in preds]
             token_new, label_new, pred_new, _ = utils.merge_subtags(tag_values=self.tag_values, tags_true=labels, tokens=tokens, sm=sm)
             out.append(list(zip(token_new, label_new, pred_new)))   
+        
+        return out
+
+    def batch_processing_real(self, batch, outputs):
+        out = []
+        predict_labels = []
+
+        count_idx = 0
+
+        b_input_ids, _ = batch
+
+        b_input_ids = b_input_ids.to('cpu').numpy().tolist()
+        
+        logits = outputs[0].detach().cpu().numpy()
+        
+        for predicts in np.argmax(logits, axis=2):
+            predict_labels.append(predicts)
+        
+        for b_input_id, preds in zip(b_input_ids, predict_labels):
+            n = sum(np.array(b_input_id) != self.tokenizer.pad_token_id)
+            sm = [(utils.softmax(logits[count_idx,ii])) for ii in range(n)]
+            count_idx += 1
+            tokens = self.tokenizer.convert_ids_to_tokens(b_input_id)[:n]
+            preds = [self.tag_values[i] for i in preds]
+            token_new, _, pred_new, _ = utils.merge_subtags(tag_values=self.tag_values, tags_true=None, tokens=tokens, sm=sm)
+            out.append(list(zip(token_new, pred_new)))   
         
         return out
 
