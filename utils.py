@@ -1,4 +1,4 @@
-from spacy import displacy
+# from spacy import displacy
 from sklearn.metrics import *
 import string
 import unicodedata
@@ -174,7 +174,7 @@ def show_span_f1(dic):
 def convert_spanformat(arr):
     if len(arr) < 1:
         return None
-    text = ' '.join([i for i, j in arr])
+  
     pos = 0
     start_end_labels = []
     for word, tag in arr:

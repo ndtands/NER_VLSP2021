@@ -15,9 +15,9 @@
     },
 
     "sub" : "▁",
-    "device": "cuda",
-    "max_len": 256,
-    "batch_size": 32,   
+    "device": "cpu",
+    "max_len": 30,
+    "batch_size": 8,   
     "tag_values": ["PAD", "ADDRESS","SKILL","EMAIL","PERSON","PHONENUMBER","MISCELLANEOUS","QUANTITY","PERSONTYPE",
         "ORGANIZATION","PRODUCT","IP","LOCATION","O","DATETIME","EVENT", "URL"],
     "tokenizer" : "pretrain/xlmr_Tokenizer",

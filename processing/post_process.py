@@ -255,7 +255,7 @@ def post_processing(origin_sentence, stack, out_predict):
                 datas_trained[i] = (datas_trained[i][0], "O")
               elif datas_trained[i] not in ['-/']:
                 datas_trained[i] =(datas_trained[i][0], "LOCATION")
-  print(datas_trained, stack)
+ 
   for stk in stack:
     datas_trained[stk] = ('/n', datas_trained[stk][1])
   return datas_trained
