@@ -4,14 +4,12 @@ import torch
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from transformers import AutoConfig, AutoModel, AutoTokenizer
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler
-import pickle
+from transformers import LukeConfig, LukeModel, MLukeTokenizer
 from transformers import AdamW, get_linear_schedule_with_warmup
 
 import torch.nn.functional as F
 log_soft = F.log_softmax
 import utils
-import data_processing
 from dataloader import BertDataLoader
 
 import torch
@@ -21,20 +19,25 @@ import numpy as np
 from define_name import *
 from processing import pre_process
 from processing import post_process
+from torchcrf import CRF
 
 class NER(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, model_type='xlmr', head='softmax'):
         super(NER, self).__init__()
+        self.head = head
         self.hyper_parameter = config['hyper_parameter']
         self.tag_values = config['tag_values']
         self.max_len = config['max_len']
         self.device = config['device']
         self.batch_size = config['batch_size']
-        self.tokenizer = AutoTokenizer.from_pretrained(config['tokenizer'], do_lower_case=False,use_fast=False)
-        self.config_pretrain = AutoConfig.from_pretrained(config['config'], output_hidden_states=True)
-        self.base_model = AutoModel.from_pretrained(config['model'], config=self.config_pretrain, add_pooling_layer=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(config[model_type], do_lower_case=False,use_fast=False)
+        self.config_pretrain = AutoConfig.from_pretrained(config[model_type], output_hidden_states=True)
+        self.base_model = AutoModel.from_pretrained(config[model_type], config=self.config_pretrain, add_pooling_layer=True)
         self.sub = config['sub']
-        self.model = BaseBertSoftmax(self.base_model, self.hyper_parameter['linear_dropout'], num_labels=len(self.tag_values))
+        if head == 'softmax':
+            self.model = BaseBertSoftmax(self.base_model, self.hyper_parameter['linear_dropout'], num_labels=len(self.tag_values))
+        else:
+            self.model = BaseBertCrf(self.base_model, self.hyper_parameter['linear_dropout'], num_labels=len(self.tag_values))
         self.model.to(self.device)
         self.dataloader = BertDataLoader(self.tokenizer, self.tag_values, self.sub, self.max_len, self.batch_size, self.device)
 
@@ -57,17 +60,29 @@ class NER(nn.Module):
             input_mask_tensor = torch.tensor(input_mask).type(torch.LongTensor).to(self.device) 
             with torch.no_grad():
                 outputs = self.model.forward_custom(input_ids_tensor, input_mask_tensor)
-            logits = outputs[0].detach().cpu().numpy()
-            len_subword = sum(input_ids[0] != self.tokenizer.pad_token_id)
-            sm = [(utils.softmax(logits[0,i])) for i in range(len_subword)]
-            tests, _, tags, probs = utils.merge_subtags(tag_values=self.tag_values, tokens=sub, sm=sm)
-            words_out += tests[1:-1]
-            tags_out += tags[1:-1]
-            probs_out += probs[1:-1]
-        out1 = [(w,t,p) for w,t,p in zip(words_out,tags_out, probs_out)]
-        out = post_process.span_cluster(out1)
-        texts = " ".join([word for (word, _) in out])
-        result = post_process.post_processing(texts, stack, out)
+            
+            if self.head == 'crf':
+                predict_label = outputs[0]
+            else:
+                predict_label = []
+                logits = outputs[0].detach().cpu().numpy()
+                for predicts in np.argmax(logits, axis=-1)[0][:len(sub)]:
+                    predict_label.append(predicts)
+            
+            #predict_label = outputs[0]
+            #logits = outputs[0].detach().cpu().numpy()
+            #print("HERE", predict_label)
+            #sm = [(utils.softmax(logits[0,i])) for i in range(len_subword)]
+            #tests, _, tags, probs = utils.merge_subtags(tag_values=self.tag_values, tokens=sub, sm=sm)
+            token_new, pred_new = utils.merge_subtags_3column(tokens=sub, tags_predict=predict_label)
+            words_out += token_new[1:-1]
+            tags_out += pred_new[1:-1]
+            #probs_out += probs[1:-1]
+        
+        out1 = [(w,self.tag_values[t]) for w,t in zip(words_out,tags_out)]
+        #out = post_process.span_cluster(out1)
+        texts = " ".join([word for (word, _) in out1])
+        result = post_process.post_processing(texts, stack, out1)
         
         if interpret:
             return result, probs_out
@@ -238,4 +253,25 @@ class BaseBertSoftmax(nn.Module):
             outputs = (loss,) + outputs
         return outputs 
 
+class BaseBertCrf(nn.Module):
+    def __init__(self, model, drop_out , num_labels):
+        super(BaseBertCrf, self).__init__()
+        self.num_labels = num_labels
+        self.model = model
+        self.dropout = nn.Dropout(drop_out)
+        self.classifier = nn.Linear(self.model.config.hidden_size, num_labels)
+        self.crf = CRF(num_labels, batch_first = True)
+    
+    def forward_custom(self, input_ids, attention_mask=None, labels=None, head_mask=None):
+        outputs = self.model(input_ids, attention_mask=attention_mask)
+        sequence_output = self.dropout(outputs[0])
+        
+        logits = self.classifier(sequence_output) # [32,256,13]
+        if labels is not None:
+            loss = -self.crf(log_soft(logits, 2), labels, mask=attention_mask.type(torch.uint8), reduction='mean')
+            prediction = self.crf.decode(logits, mask=attention_mask.type(torch.uint8))
+            return [loss, prediction]
+        else:
+            prediction = self.crf.decode(logits, mask=attention_mask.type(torch.uint8))
+            return prediction
 #########################################################

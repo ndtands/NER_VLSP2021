@@ -18,9 +18,8 @@
     "device": "cuda",
     "max_len": 256,
     "batch_size": 32,   
-    "tag_values": ["PAD", "ADDRESS","SKILL","EMAIL","PERSON","PHONENUMBER","MISCELLANEOUS","QUANTITY","PERSONTYPE",
+    "tag_values": ["PAD", "ADDRESS","SKILL","EMAIL","PERSON","PHONENUMBER","QUANTITY","PERSONTYPE",
         "ORGANIZATION","PRODUCT","IP","LOCATION","O","DATETIME","EVENT", "URL"],
-    "tokenizer" : "pretrain/xlmr_Tokenizer",
-    "config" : "pretrain/xlmr_Config",
-    "model"  : "pretrain/xlmr_Model"
+    "xlmr" : "xlm-roberta-base", 
+    "mluke" : "studio-ousia/mluke-base"
 }
