@@ -44,7 +44,7 @@ $ pip install -r requirements.txt
 **Step 5:** Training Model:
 For training model can follow our notebook: TEST.ipynb or you can dowload our trained weight file for data VLSP 2021.
 '''
-https://drive.google.com/file/d/1sPCnqT1m_tvj-V_9e6qucXck4ydiiWWJ/view?usp=sharing
+https://drive.google.com/drive/u/1/folders/1AlY6CRl2p-u3TeYfFAaWEAMq5hdydb4E
 '''
 
 **Step 6**: Affer complete process training, you can runing command 'python app.py' and access addess '127.0.0:5000' for using application.
