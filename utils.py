@@ -249,6 +249,8 @@ def span_f1(arr, strict = FLAG_STRICT['MAX'], labels= None, digits=4):
         f1_avg += f1
     return f1_avg / len(labels), classfication_rp
 
+
+
 def merge_subtags(tag_values, tokens, sm, tags_true=None):
     tags = []
     tests = []
@@ -281,3 +283,23 @@ def merge_subtags(tag_values, tokens, sm, tags_true=None):
 
 def softmax(arr):
     return np.exp(arr) / sum(np.exp(arr))
+
+def merge_subtags_3column(tokens, tags_predict):
+    tags = []
+    texts = []
+    #trues = []
+    for index in range(len(tokens)):
+        if len(texts) == 0:
+            if "▁" in tokens[index]:
+                texts.append(tokens[index][1:])
+            else:
+                texts.append(tokens[index])
+            tags.append(tags_predict[index])
+            #trues.append(tags_true[index])
+        elif "▁" in tokens[index] or ('<' in tokens[index] and '>' in tokens[index]):
+            texts.append(tokens[index][1:])
+            tags.append(tags_predict[index])
+            #trues.append(tags_true[index])
+        else:
+            texts[-1] = texts[-1] + tokens[index]
+    return texts, tags
