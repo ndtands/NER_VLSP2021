@@ -1,0 +1,25 @@
+version: "3"
+services:
+   web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: nerpenhourse
+    ports:
+      - "8080:2301"
+    environment:
+      - FLASK_ENV=development
+
+# version: "3"
+# services:
+#    web:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: trmanh29
+#     ports:
+#       - "8085:2301"
+#     # volumes:
+#     #   - .:/code
+#     environment:
+#       FLASK_ENV: development

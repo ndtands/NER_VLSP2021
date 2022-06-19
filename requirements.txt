@@ -10,6 +10,7 @@ scikit_learn==1.0.2
 spacy==3.0.7
 tensorflow==2.7.0
 tld==0.12.6
-torch==1.10.1+cu113
+torch==1.11.0
 tqdm==4.62.3
 transformers==4.14.1
+gunicorn
